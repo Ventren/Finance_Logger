@@ -1,4 +1,4 @@
-<h1>How to Run This Project Locally</h1>
+How to Run This Project Locally
 
 Step 1: Database Setup
 
