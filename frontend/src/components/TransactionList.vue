@@ -1,30 +1,46 @@
 <script setup>
 defineProps(['transactions'])
+defineEmits(['delete-me', 'edit-me'])
+//dateformat
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('en-MY', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+}
 </script>
 
 <template>
-  <div class="list-container">
-    <h2>History</h2>
-    <table>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse table-fixed">
       <thead>
-        <tr>
-          <th>Date</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-          <th>Action</th>
+        <tr class="bg-slate-50 border-b border-slate-200">
+          <th class="p-4 text-sm font-semibold text-slate-600 w-1/4">Date</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 w-1/4">Category</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 w-1/4">Description</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 w-1/6 text-right">Amount</th>
+          <th class="p-4 text-sm font-semibold text-slate-600 w-1/6 text-center">Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <tr v-for="t in transactions" :key="t.id">
-          <td>{{ t.transaction_date }}</td>
-          <td>{{ t.description }}</td>
-          <td>{{ t.category }}</td>
-          <td :class="t.type === 'income' ? 'income' : 'expense'">
-            {{ t.currency }} {{ t.amount }}
+      <tbody class="divide-y divide-slate-100">
+        <tr v-for="t in transactions" :key="t.id" class="hover:bg-slate-50 transition-colors">
+          <td class="p-4 text-sm text-slate-600">{{ formatDate(t.transaction_date) }}</td>
+          <td class="p-4 text-sm font-medium text-slate-800">{{ t.category || 'General' }}</td>
+          <td class="p-4 text-sm text-slate-500 italic">{{ t.description }}</td>
+          <td class="p-4 text-sm font-bold text-right" :class="t.type === 'expense' ? 'text-rose-600' : 'text-emerald-600'">
+            {{ t.currency }} {{ parseFloat(t.amount).toFixed(2) }}
           </td>
-          <td>
-            <button @click="$emit('delete-me', t.id)">Delete</button>
+          <td class="p-4 text-center">
+            <div class="flex justify-center gap-3">
+              <button @click="$emit('edit-me', t)" class="text-indigo-600 hover:text-indigo-900 transition-colors rounded-lg cursor-pointer">
+                <span class="text-xs font-bold uppercase">Edit</span>
+              </button>
+              
+              <button @click="$emit('delete-me', t.id)" class="text-rose-500 hover:text-rose-700 transition-colors rounded-lg cursor-pointer">
+                <span class="text-xs font-bold uppercase">Delete</span>
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -36,7 +52,7 @@ defineProps(['transactions'])
 table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed; /* This is the secret sauce! */
+  table-layout: fixed; 
 }
 
 th, td {
