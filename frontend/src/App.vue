@@ -10,6 +10,8 @@ const transactions = ref([])
 const searchQuery = ref('')// filter for description
 const selectedType = ref('All') // filter for income & expense
 const selectedCurr = ref('All') // filter for currency
+const filterStartDate = ref('') // start datefilter
+const filterEndDate = ref('')   // end datefilter
 //for update function
 const isEditing = ref(false);
 const currentId = ref(null); // To keep track of which ID we are updating
@@ -86,22 +88,34 @@ const availableCurrencies = computed(() => {
 /*-----------------------------------------END Currency Management---------------------------------------*/
 
 /*--------------------------------------------Filters------------------------------------------*/
+
+const resetDateFilters = () => {
+  filterStartDate.value = ''
+  filterEndDate.value = ''
+}
+
 //filter for table
 const filteredTransactions = computed(() => {
   return transactions.value.filter(t => {
-    // 1. Description Match
+    // Description Match
     const matchesSearch = t.description.toLowerCase().includes(searchQuery.value.toLowerCase())
 
-    // 2. Type Match (Income/Expense)
+    // Type (Income/Expense)
     const matchesType = selectedType.value === 'All' || t.type === selectedType.value
 
-    // 3. Currency Match
+    // Currency 
     const matchesCurrency = selectedCurr.value === 'All' || t.currency === selectedCurr.value
-
-    // Only return TRUE if all three are satisfied
-    return matchesSearch && matchesType && matchesCurrency
+    
+    // Date
+    const transactionDate = t.transaction_date  // format YYYY-MM-DD
+    const matchesStart = !filterStartDate.value || transactionDate >= filterStartDate.value
+    const matchesEnd = !filterEndDate.value || transactionDate <= filterEndDate.value
+    console.log(`Comparing: DB Date [${transactionDate}] with Filter Start [${matchesStart}]`);
+    // Only return TRUE if ALL five are satisfied
+    return matchesSearch && matchesType && matchesCurrency && matchesStart && matchesEnd
   })
 })
+
 /*-----------------------------------------END Filter---------------------------------------*/
 // changed from totalBalance to wallet balance to support multiple currency
 const walletBalance = computed(() => {
@@ -244,7 +258,7 @@ const exchangeRates = {
 const totalNetWorth = computed(() => {
   let totalInMYR = 0;
 
-  // walletBalance is the object { MYR: 5000, USD: 140 } we built earlier
+ 
   for (const [currency, balance] of Object.entries(walletBalance.value)) {
     const rate = exchangeRates[currency] || 1.0;
     totalInMYR += balance * rate;
@@ -260,7 +274,8 @@ const totalNetWorth = computed(() => {
     <div class="max-w-5xl mx-auto">
 
       <header class="mb-8">
-        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Financial Logger Dashboard</h1>
+        <h1 class="mb-4 text-4xl font-bold tracking-tight text-heading md:text-5xl lg:text-6xl"> Financial Logger
+          Dashboard</h1>
         <p class="text-slate-500">Manage your transactions and multi-currency wallets.</p>
       </header>
 
@@ -317,7 +332,7 @@ const totalNetWorth = computed(() => {
 
         <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Spending Breakdown</h3>
-          <ExpenseChart :transactions="transactions" :categories="categories" />
+          <ExpenseChart :transactions="filteredTransactions" :categories="categories" />
         </div>
 
       </div>
@@ -406,6 +421,23 @@ const totalNetWorth = computed(() => {
           </select>
         </div>
 
+        <!-- Date filter -->
+        <div class="p-4 border-bottom bg-slate-50/50 flex flex-col md:flex-row gap-4 flex-wrap">
+          <div class="flex items-center gap-2">
+            <input v-model="filterStartDate" type="date"
+              class="px-3 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+            <span class="text-slate-400">to</span>
+            <input v-model="filterEndDate" type="date"
+              class="px-3 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 text-sm" />
+          </div>
+
+          <button v-if="filterStartDate || filterEndDate" @click="resetDateFilters"
+            class="text-xs text-slate-500 hover:text-emerald-600 font-medium">
+            Clear Dates
+          </button>
+        </div>
+        <!-- Date filter -->
+
         <TransactionList :transactions="filteredTransactions" @delete-me="deleteTransaction" @edit-me="startEdit" />
       </div>
 
@@ -417,9 +449,6 @@ const totalNetWorth = computed(() => {
     <div class="max-w-5xl mx-auto px-4 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
 
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-          VN
-        </div>
         <span class="text-sm font-semibold text-slate-800 tracking-tight">
           Financial Logger <span class="text-slate-400 font-normal">by Ventren Nair</span>
         </span>
