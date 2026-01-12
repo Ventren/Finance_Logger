@@ -4,7 +4,7 @@ Step 1: Database Setup
 
 1. Open phpMyAdmin.
 2. Create a new database named `financial_logger`.
-3. Import the `database.sql` file provided in this repository.
+3. Import the `finance_logger.sql` file provided in this repository.
 
 Step 2: Backend Setup (PHP)
 
